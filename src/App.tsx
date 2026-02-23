@@ -1,20 +1,35 @@
 import { useState } from 'react'
 import { useAuth } from './contexts/useAuth'
+import { useHousehold } from './hooks/useHousehold'
 import { useAllowanceStore } from './useAllowanceStore'
 import { Summary } from './Summary'
 import { AddTransactionForm } from './AddTransactionForm'
 import { AddKidForm } from './AddKidForm'
 import { TransactionList } from './TransactionList'
 import { AuthScreen } from './AuthScreen'
+import { JoinOrCreateHousehold } from './JoinOrCreateHousehold'
+import { InviteCoparentModal } from './InviteCoparentModal'
 
 type View = 'summary' | 'add' | 'addKid' | 'transactions'
 
 export default function App() {
   const { session, loading: authLoading, signOut } = useAuth()
-  const { kids, addTransaction, addKid, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error } = useAllowanceStore()
+  const {
+    householdId,
+    householdName,
+    loading: householdLoading,
+    error: householdError,
+    createHousehold,
+    joinHouseholdByCode,
+    getInviteCode,
+  } = useHousehold()
+  const { kids, addTransaction, deleteTransaction, addKid, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
+  const loading = householdLoading || dataLoading
+  const error = householdError ?? dataError
   const [view, setView] = useState<View>('summary')
   const [addFormState, setAddFormState] = useState<{ type: 'credit' | 'expense'; kidId: string } | null>(null)
   const [transactionsKidId, setTransactionsKidId] = useState<string | null>(null)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   const selectedKid = transactionsKidId ? kids.find((k) => k.id === transactionsKidId) ?? null : null
 
@@ -30,7 +45,35 @@ export default function App() {
     return <AuthScreen />
   }
 
-  if (dataLoading) {
+  if (!householdId && householdLoading) {
+    return (
+      <div className="app app-loading">
+        <p>Loading…</p>
+      </div>
+    )
+  }
+
+  if (!householdId) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>Allowance Tracker</h1>
+          <button type="button" onClick={() => signOut()} className="header-sign-out">
+            Sign out
+          </button>
+        </header>
+        <main className="app-main">
+          <JoinOrCreateHousehold
+            onJoin={joinHouseholdByCode}
+            onCreate={createHousehold}
+            error={householdError}
+          />
+        </main>
+      </div>
+    )
+  }
+
+  if (loading) {
     return (
       <div className="app app-loading">
         <p>Loading your data…</p>
@@ -49,11 +92,25 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Allowance Tracker</h1>
-        <button type="button" onClick={() => signOut()} className="header-sign-out">
-          Sign out
-        </button>
+        <div className="app-header-titles">
+          <h1>Allowance Tracker</h1>
+          {householdName && <span className="household-name">{householdName}</span>}
+        </div>
+        <div className="header-actions">
+          <button type="button" onClick={() => setShowInviteModal(true)} className="header-invite">
+            Invite co-parent
+          </button>
+          <button type="button" onClick={() => signOut()} className="header-sign-out">
+            Sign out
+          </button>
+        </div>
       </header>
+      {showInviteModal && (
+        <InviteCoparentModal
+          getInviteCode={getInviteCode}
+          onClose={() => setShowInviteModal(false)}
+        />
+      )}
 
       <main className="app-main">
         {view === 'summary' && (
@@ -100,6 +157,7 @@ export default function App() {
               setTransactionsKidId(null)
               setView('summary')
             }}
+            onDeleteTransaction={deleteTransaction}
           />
         )}
       </main>

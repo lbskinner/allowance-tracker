@@ -49,9 +49,6 @@ begin
   end if;
   insert into public.households (name) values (null) returning id into new_household_id;
   -- Trigger adds (new_household_id, auth.uid()) to household_members
-  insert into public.kids (household_id, name) values
-    (new_household_id, 'Alex'),
-    (new_household_id, 'Sam');
   return new_household_id;
 end;
 $$;

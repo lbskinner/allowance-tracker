@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Kid, Transaction, TransactionType } from './types'
-import { useHousehold } from './hooks/useHousehold'
 import { supabase } from './lib/supabase'
 
 const db = supabase!
@@ -27,23 +26,23 @@ function mapTransaction(row: {
   }
 }
 
-export function useAllowanceStore() {
-  const { householdId, loading: householdLoading, error: householdError } = useHousehold()
+export function useAllowanceStore(householdId: string | null) {
   const [kids, setKids] = useState<Kid[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [dataError, setDataError] = useState<Error | null>(null)
 
-  const loading = householdLoading || dataLoading
-  const error = householdError ?? dataError
-
   useEffect(() => {
     if (!householdId) {
-      queueMicrotask(() => {
-        setKids([])
-        setTransactions([])
-        setDataLoading(false)
-      })
+      setKids([])
+      setTransactions([])
+      setDataLoading(false)
+      return
+    }
+
+    if (!db) {
+      setDataError(new Error('Supabase is not configured'))
+      setDataLoading(false)
       return
     }
 
@@ -52,42 +51,49 @@ export function useAllowanceStore() {
     async function fetchData() {
       setDataLoading(true)
       setDataError(null)
-      const { data: kidsRows, error: kidsErr } = await db
-        .from('kids')
-        .select('id, name')
-        .eq('household_id', householdId)
-        .order('created_at', { ascending: true })
+      try {
+        const { data: kidsRows, error: kidsErr } = await db
+          .from('kids')
+          .select('id, name')
+          .eq('household_id', householdId)
+          .order('created_at', { ascending: true })
 
-      if (cancelled) return
-      if (kidsErr) {
-        setDataError(kidsErr as Error)
-        setDataLoading(false)
-        return
+        if (cancelled) return
+        if (kidsErr) {
+          setDataError(kidsErr as Error)
+          return
+        }
+
+        const kidList = (kidsRows ?? []).map(mapKid)
+        setKids(kidList)
+
+        if (kidList.length === 0) {
+          setTransactions([])
+          return
+        }
+
+        const kidIds = kidList.map((k) => k.id)
+        const { data: txRows, error: txErr } = await db
+          .from('transactions')
+          .select('id, kid_id, type, amount, date, description')
+          .in('kid_id', kidIds)
+          .order('date', { ascending: false })
+
+        if (cancelled) return
+        if (txErr) {
+          setDataError(txErr as Error)
+        } else {
+          setTransactions((txRows ?? []).map(mapTransaction))
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setDataError(err instanceof Error ? err : new Error(String(err)))
+        }
+      } finally {
+        if (!cancelled) {
+          setDataLoading(false)
+        }
       }
-
-      const kidList = (kidsRows ?? []).map(mapKid)
-      setKids(kidList)
-
-      if (kidList.length === 0) {
-        setTransactions([])
-        setDataLoading(false)
-        return
-      }
-
-      const kidIds = kidList.map((k) => k.id)
-      const { data: txRows, error: txErr } = await db
-        .from('transactions')
-        .select('id, kid_id, type, amount, date, description')
-        .in('kid_id', kidIds)
-        .order('date', { ascending: false })
-
-      if (cancelled) return
-      if (txErr) {
-        setDataError(txErr as Error)
-      } else {
-        setTransactions((txRows ?? []).map(mapTransaction))
-      }
-      setDataLoading(false)
     }
 
     fetchData()
@@ -138,6 +144,19 @@ export function useAllowanceStore() {
     [transactions]
   )
 
+  const deleteTransaction = useCallback(async (transactionId: string) => {
+    const { error: deleteError } = await db
+      .from('transactions')
+      .delete()
+      .eq('id', transactionId)
+
+    if (deleteError) {
+      setDataError(deleteError as Error)
+      return
+    }
+    setTransactions((prev) => prev.filter((t) => t.id !== transactionId))
+  }, [])
+
   const addKid = useCallback(
     async (name: string) => {
       if (!householdId) return
@@ -164,10 +183,11 @@ export function useAllowanceStore() {
     kids,
     transactions,
     addTransaction,
+    deleteTransaction,
     addKid,
     getBalanceForKid,
     getTransactionsForKid,
-    loading,
-    error,
+    loading: dataLoading,
+    error: dataError,
   }
 }
