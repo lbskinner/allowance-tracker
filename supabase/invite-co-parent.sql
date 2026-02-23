@@ -1,4 +1,4 @@
--- Invite co-parent: invite_code on households + RPCs for get/create code and join by code.
+-- Invite partner: invite_code on households + RPCs for get/create code and join by code.
 -- Run in Supabase SQL Editor after schema.sql.
 
 -- 1. Add invite_code to households (unique, so one code maps to one household)

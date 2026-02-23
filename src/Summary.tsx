@@ -67,7 +67,7 @@ export function Summary({
                           setOpenMenuKidId(null)
                         }}
                       >
-                        Configure allowance
+                        Set allowance
                       </button>
                       <button
                         type="button"

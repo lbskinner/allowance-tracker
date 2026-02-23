@@ -83,7 +83,7 @@ Schema supports **multiple users per family** so both parents can log in and upd
 2. Parent A creates kids (INSERT into `kids` with that `household_id`).
 3. To add Parent B: insert a row into `household_members` with the same `household_id` and B’s `user_id` (e.g. after B signs up and you have their id, or via an invite-by-email flow that looks up the user).
 
-The app can implement “Invite co-parent” (e.g. send link or code) and then INSERT into `household_members` when they accept or enter the code.
+The app can implement “Invite partner” (e.g. send link or code) and then INSERT into `household_members` when they accept or enter the code.
 
 ---
 

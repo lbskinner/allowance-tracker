@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 
-interface InviteCoparentModalProps {
+interface InvitePartnerModalProps {
   getInviteCode: () => Promise<string | null>
   onClose: () => void
 }
 
-export function InviteCoparentModal({ getInviteCode, onClose }: InviteCoparentModalProps) {
+export function InvitePartnerModal({ getInviteCode, onClose }: InvitePartnerModalProps) {
   const [code, setCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
@@ -44,9 +44,9 @@ export function InviteCoparentModal({ getInviteCode, onClose }: InviteCoparentMo
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div className="modal invite-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="invite-modal-title">
-        <h2 id="invite-modal-title">Invite co-parent</h2>
+        <h2 id="invite-modal-title">Invite partner</h2>
         <p className="invite-modal-intro">
-          Share this code or link with your co-parent. They can sign up or log in and enter the code (or open the link) to join this household.
+          Share this code or link with your partner. They can sign up or log in and enter the code (or open the link) to join this household.
         </p>
         {loading ? (
           <p className="invite-modal-loading">Loading code…</p>

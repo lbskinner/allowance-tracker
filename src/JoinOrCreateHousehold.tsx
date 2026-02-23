@@ -52,7 +52,7 @@ export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: 
     <section className="join-create-household">
       <h2>Set up your household</h2>
       <p className="join-create-intro">
-        Join an existing household with a code from your co-parent, or create a new one.
+        Join an existing household with a code from your partner, or create a new one.
       </p>
 
       {error && (
@@ -60,7 +60,7 @@ export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: 
           <p className="app-error join-create-error">{error.message}</p>
           {error.message.includes('Invalid or expired') && (
             <p className="join-create-error-hint">
-              Get the 6-character code from your co-parent: they open this app, sign in, then tap “Invite co-parent” and copy the code or link.
+              Get the 6-character code from your partner: they open this app, sign in, then tap “Invite partner” and copy the code or link.
             </p>
           )}
         </div>

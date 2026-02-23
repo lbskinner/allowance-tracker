@@ -9,7 +9,7 @@ import { AddKidForm } from './AddKidForm'
 import { TransactionList } from './TransactionList'
 import { AuthScreen } from './AuthScreen'
 import { JoinOrCreateHousehold } from './JoinOrCreateHousehold'
-import { InviteCoparentModal } from './InviteCoparentModal'
+import { InvitePartnerModal } from './InvitePartnerModal'
 import { ConfigureAllowanceModal } from './ConfigureAllowanceModal'
 import { ViewLinkModal } from './ViewLinkModal'
 
@@ -103,7 +103,7 @@ export default function App() {
         </div>
         <div className="header-actions">
           <button type="button" onClick={() => setShowInviteModal(true)} className="header-invite">
-            Invite co-parent
+            Invite partner
           </button>
           <button type="button" onClick={() => signOut()} className="header-sign-out">
             Sign out
@@ -111,7 +111,7 @@ export default function App() {
         </div>
       </header>
       {showInviteModal && (
-        <InviteCoparentModal
+        <InvitePartnerModal
           getInviteCode={getInviteCode}
           onClose={() => setShowInviteModal(false)}
         />
@@ -187,7 +187,6 @@ export default function App() {
               setView('summary')
             }}
             onDeleteTransaction={deleteTransaction}
-            onGetViewLink={(kid) => setViewLinkKid(kid)}
           />
         )}
       </main>

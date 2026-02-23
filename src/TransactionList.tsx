@@ -8,7 +8,6 @@ interface TransactionListProps {
   transactions: Transaction[]
   onBack: () => void
   onDeleteTransaction: (transactionId: string) => void
-  onGetViewLink?: (kid: Kid) => void
 }
 
 function formatDate(iso: string) {
@@ -41,7 +40,7 @@ function runningBalances(transactions: Transaction[]): Map<string, number> {
   return map
 }
 
-export function TransactionList({ kid, transactions, onBack, onDeleteTransaction, onGetViewLink }: TransactionListProps) {
+export function TransactionList({ kid, transactions, onBack, onDeleteTransaction }: TransactionListProps) {
   const [dateRange, setDateRange] = useState<DateRange>(30)
   const filtered = useMemo(
     () => filterByDateRange(transactions, dateRange),
@@ -59,16 +58,9 @@ export function TransactionList({ kid, transactions, onBack, onDeleteTransaction
     <section className="transaction-list-section">
       <div className="transaction-list-header">
         <h2>Transactions – {kid.name}</h2>
-        <div className="transaction-list-header-actions">
-          {onGetViewLink && (
-            <button type="button" onClick={() => onGetViewLink(kid)} className="secondary">
-              Get view link
-            </button>
-          )}
-          <button type="button" onClick={onBack} className="back secondary">
-            ← Back to summary
-          </button>
-        </div>
+        <button type="button" onClick={onBack} className="back secondary">
+          ← Back to summary
+        </button>
       </div>
       {transactions.length > 0 && (
         <div className="transaction-filter">
