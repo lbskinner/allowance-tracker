@@ -34,7 +34,8 @@ create trigger on_household_created
   for each row execute function public.handle_new_household();
 
 -- RPC for new users to create a household (bypasses RLS; trigger still adds them to household_members)
-create or replace function public.create_household_for_current_user()
+-- p_name: optional household name (e.g. "Smith Family")
+create or replace function public.create_household_for_current_user(p_name text default null)
 returns uuid
 language plpgsql
 security definer
@@ -43,24 +44,26 @@ as $$
 declare
   new_household_id uuid;
   uid uuid := auth.uid();
+  name_trim text := nullif(trim(p_name), '');
 begin
   if uid is null then
     raise exception 'Not authenticated';
   end if;
-  insert into public.households (name) values (null) returning id into new_household_id;
+  insert into public.households (name) values (name_trim) returning id into new_household_id;
   -- Trigger adds (new_household_id, auth.uid()) to household_members
   return new_household_id;
 end;
 $$;
-grant execute on function public.create_household_for_current_user() to authenticated;
-grant execute on function public.create_household_for_current_user() to anon;
-grant execute on function public.create_household_for_current_user() to service_role;
+grant execute on function public.create_household_for_current_user(text) to authenticated;
+grant execute on function public.create_household_for_current_user(text) to anon;
+grant execute on function public.create_household_for_current_user(text) to service_role;
 
 -- 3. Kids (belong to a household, so all members of that household can manage them)
 create table public.kids (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null references public.households(id) on delete cascade,
   name text not null,
+  allowance_amount numeric(12, 2) check (allowance_amount is null or allowance_amount > 0),
   created_at timestamptz not null default now()
 );
 

@@ -74,32 +74,34 @@ export function useHousehold() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- depend on user id only so token refresh doesn't clear household
   }, [session?.user?.id, refreshHousehold])
 
-  const createHousehold = useCallback(async () => {
-    const session = sessionRef.current
-    if (!session?.user?.id) {
-      setError(new Error('Not signed in. Please sign in again.'))
-      return
-    }
-    if (!db) {
-      setError(new Error('Supabase is not configured. Check your .env and restart the dev server.'))
-      return
-    }
-    setError(null)
-    try {
-      const { error: createError } = await db.rpc(
-        'create_household_for_current_user'
-      )
-      if (createError) {
-        setError(createError as Error)
+  const createHousehold = useCallback(
+    async (name?: string) => {
+      const session = sessionRef.current
+      if (!session?.user?.id) {
+        setError(new Error('Not signed in. Please sign in again.'))
         return
       }
-      // RPC succeeded (household + trigger-insert into household_members both ran).
-      setLoading(true)
-      await refreshHousehold()
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)))
-    }
-  }, [refreshHousehold])
+      if (!db) {
+        setError(new Error('Supabase is not configured. Check your .env and restart the dev server.'))
+        return
+      }
+      setError(null)
+      try {
+        const { error: createError } = await db.rpc('create_household_for_current_user', {
+          p_name: name?.trim() || null,
+        })
+        if (createError) {
+          setError(createError as Error)
+          return
+        }
+        setLoading(true)
+        await refreshHousehold()
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)))
+      }
+    },
+    [refreshHousehold]
+  )
 
   const joinHouseholdByCode = useCallback(
     async (code: string) => {

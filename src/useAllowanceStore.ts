@@ -4,8 +4,12 @@ import { supabase } from './lib/supabase'
 
 const db = supabase!
 
-function mapKid(row: { id: string; name: string }): Kid {
-  return { id: row.id, name: row.name }
+function mapKid(row: { id: string; name: string; allowance_amount?: number | null }): Kid {
+  return {
+    id: row.id,
+    name: row.name,
+    allowanceAmount: row.allowance_amount != null ? Number(row.allowance_amount) : null,
+  }
 }
 
 function mapTransaction(row: {
@@ -54,7 +58,7 @@ export function useAllowanceStore(householdId: string | null) {
       try {
         const { data: kidsRows, error: kidsErr } = await db
           .from('kids')
-          .select('id, name')
+          .select('id, name, allowance_amount')
           .eq('household_id', householdId)
           .order('created_at', { ascending: true })
 
@@ -165,7 +169,7 @@ export function useAllowanceStore(householdId: string | null) {
       const { data, error: insertError } = await db
         .from('kids')
         .insert({ household_id: householdId, name: trimmed })
-        .select('id, name')
+        .select('id, name, allowance_amount')
         .single()
 
       if (insertError) {
@@ -179,12 +183,32 @@ export function useAllowanceStore(householdId: string | null) {
     [householdId]
   )
 
+  const updateKidAllowance = useCallback(
+    async (kidId: string, amount: number | null) => {
+      if (!db) return
+      const { error: updateError } = await db
+        .from('kids')
+        .update({ allowance_amount: amount })
+        .eq('id', kidId)
+
+      if (updateError) {
+        setDataError(updateError as Error)
+        return
+      }
+      setKids((prev) =>
+        prev.map((k) => (k.id === kidId ? { ...k, allowanceAmount: amount } : k))
+      )
+    },
+    []
+  )
+
   return {
     kids,
     transactions,
     addTransaction,
     deleteTransaction,
     addKid,
+    updateKidAllowance,
     getBalanceForKid,
     getTransactionsForKid,
     loading: dataLoading,

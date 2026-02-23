@@ -272,6 +272,44 @@ body {
   color: #c00;
 }
 
+.card-header-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.configure-allowance-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #999;
+  background: #fff;
+  color: #555;
+  cursor: pointer;
+}
+
+.configure-allowance-btn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.add-allowance-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  border: 1px solid #0d7d0d;
+  background: #e8f5e9;
+  color: #0d7d0d;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.add-allowance-btn:hover {
+  background: #c8e6c9;
+  color: #0a6b0a;
+}
+
 .card-actions {
   display: flex;
   flex-wrap: wrap;
@@ -701,4 +739,45 @@ body {
 
 .invite-modal-close {
   width: 100%;
+}
+
+.configure-allowance-modal h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.configure-allowance-intro {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.configure-allowance-modal label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+
+.configure-allowance-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.configure-allowance-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.configure-allowance-actions .btn-primary,
+.configure-allowance-actions .btn-secondary {
+  width: auto;
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { Kid } from './types'
 import { useAuth } from './contexts/useAuth'
 import { useHousehold } from './hooks/useHousehold'
 import { useAllowanceStore } from './useAllowanceStore'
@@ -9,6 +10,7 @@ import { TransactionList } from './TransactionList'
 import { AuthScreen } from './AuthScreen'
 import { JoinOrCreateHousehold } from './JoinOrCreateHousehold'
 import { InviteCoparentModal } from './InviteCoparentModal'
+import { ConfigureAllowanceModal } from './ConfigureAllowanceModal'
 
 type View = 'summary' | 'add' | 'addKid' | 'transactions'
 
@@ -23,13 +25,14 @@ export default function App() {
     joinHouseholdByCode,
     getInviteCode,
   } = useHousehold()
-  const { kids, addTransaction, deleteTransaction, addKid, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
+  const { kids, addTransaction, deleteTransaction, addKid, updateKidAllowance, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
   const loading = householdLoading || dataLoading
   const error = householdError ?? dataError
   const [view, setView] = useState<View>('summary')
   const [addFormState, setAddFormState] = useState<{ type: 'credit' | 'expense'; kidId: string } | null>(null)
   const [transactionsKidId, setTransactionsKidId] = useState<string | null>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [configuringKid, setConfiguringKid] = useState<Kid | null>(null)
 
   const selectedKid = transactionsKidId ? kids.find((k) => k.id === transactionsKidId) ?? null : null
 
@@ -114,19 +117,35 @@ export default function App() {
 
       <main className="app-main">
         {view === 'summary' && (
-          <Summary
-            kids={kids}
-            getBalanceForKid={getBalanceForKid}
-            onAddTransaction={(type, kidId) => {
-              setAddFormState({ type, kidId })
-              setView('add')
-            }}
-            onViewTransactions={(kidId) => {
-              setTransactionsKidId(kidId)
-              setView('transactions')
-            }}
-            onAddKid={() => setView('addKid')}
-          />
+          <>
+            <Summary
+              kids={kids}
+              getBalanceForKid={getBalanceForKid}
+              onAddTransaction={(type, kidId) => {
+                setAddFormState({ type, kidId })
+                setView('add')
+              }}
+              onAddAllowance={(kidId) => {
+                const kid = kids.find((k) => k.id === kidId)
+                if (kid?.allowanceAmount != null) {
+                  addTransaction(kidId, 'credit', kid.allowanceAmount, 'Allowance')
+                }
+              }}
+              onConfigureAllowance={(kid) => setConfiguringKid(kid)}
+              onViewTransactions={(kidId) => {
+                setTransactionsKidId(kidId)
+                setView('transactions')
+              }}
+              onAddKid={() => setView('addKid')}
+            />
+            {configuringKid && (
+              <ConfigureAllowanceModal
+                kid={configuringKid}
+                onSave={updateKidAllowance}
+                onClose={() => setConfiguringKid(null)}
+              />
+            )}
+          </>
         )}
 
         {view === 'addKid' && (

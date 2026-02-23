@@ -8,12 +8,13 @@ function getInitialCode(): string {
 
 interface JoinOrCreateHouseholdProps {
   onJoin: (code: string) => Promise<void>
-  onCreate: () => Promise<void>
+  onCreate: (name?: string) => Promise<void>
   error: Error | null
 }
 
 export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: JoinOrCreateHouseholdProps) {
   const [code, setCode] = useState(getInitialCode)
+  const [householdName, setHouseholdName] = useState('')
   const [joining, setJoining] = useState(false)
   const [creating, setCreating] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
@@ -39,7 +40,7 @@ export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: 
     setLocalError(null)
     setCreating(true)
     try {
-      await onCreate()
+      await onCreate(householdName.trim() || undefined)
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -86,11 +87,23 @@ export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: 
         <span>or</span>
       </div>
 
+      <div className="join-form">
+        <label htmlFor="household-name">Household name (optional)</label>
+        <input
+          id="household-name"
+          type="text"
+          placeholder="e.g. Smith Family"
+          value={householdName}
+          onChange={(e) => setHouseholdName(e.target.value)}
+          className="join-input"
+          aria-label="Household name"
+        />
+      </div>
       <button
         type="button"
         onClick={handleCreate}
         disabled={creating}
-        className="btn-secondary"
+        className="btn-secondary create-household-btn"
       >
         {creating ? 'Creating…' : 'Create new household'}
       </button>
