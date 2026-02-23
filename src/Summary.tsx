@@ -5,6 +5,7 @@ interface SummaryProps {
   getBalanceForKid: (kidId: string) => number
   onAddTransaction: (type: 'credit' | 'expense', kidId: string) => void
   onViewTransactions: (kidId: string) => void
+  onAddKid: () => void
 }
 
 export function Summary({
@@ -12,6 +13,7 @@ export function Summary({
   getBalanceForKid,
   onAddTransaction,
   onViewTransactions,
+  onAddKid,
 }: SummaryProps) {
   return (
     <section className="summary">
@@ -39,6 +41,9 @@ export function Summary({
           </div>
         ))}
       </div>
+      <button type="button" onClick={onAddKid} className="add-kid-btn">
+        + Add kid
+      </button>
     </section>
   )
 }

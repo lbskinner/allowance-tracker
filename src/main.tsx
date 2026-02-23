@@ -1,5 +1,22 @@
 import { createRoot } from 'react-dom/client'
+import { lazy, Suspense } from 'react'
 import './index.css'
-import App from './App'
+import { hasSupabase } from './lib/supabase'
+import { SetupMessage } from './SetupMessage'
 
-createRoot(document.getElementById('root')!).render(<App />)
+const AuthProvider = lazy(() =>
+  import('./contexts/AuthContext').then((m) => ({ default: m.AuthProvider }))
+)
+const App = lazy(() => import('./App'))
+
+createRoot(document.getElementById('root')!).render(
+  hasSupabase ? (
+    <AuthProvider>
+      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>}>
+        <App />
+      </Suspense>
+    </AuthProvider>
+  ) : (
+    <SetupMessage />
+  )
+)
