@@ -1,58 +1,133 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Kid, Transaction, TransactionType } from './types'
+import { supabase } from './lib/supabase'
 
-const STORAGE_KEY = 'allowance-tracker-data'
+const db = supabase!
 
-const defaultData = {
-  kids: [
-    { id: '1', name: 'Alex' },
-    { id: '2', name: 'Sam' },
-  ] as Kid[],
-  transactions: [] as Transaction[],
-}
-
-function loadData(): { kids: Kid[]; transactions: Transaction[] } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw) as { kids: Kid[]; transactions: Transaction[] }
-      if (Array.isArray(parsed.kids) && Array.isArray(parsed.transactions)) {
-        return parsed
-      }
-    }
-  } catch {
-    // ignore
+function mapKid(row: { id: string; name: string; allowance_amount?: number | null }): Kid {
+  return {
+    id: row.id,
+    name: row.name,
+    allowanceAmount: row.allowance_amount != null ? Number(row.allowance_amount) : null,
   }
-  return { ...defaultData }
 }
 
-function saveData(kids: Kid[], transactions: Transaction[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ kids, transactions }))
+function mapTransaction(row: {
+  id: string
+  kid_id: string
+  type: string
+  amount: number
+  date: string
+  description: string
+}): Transaction {
+  return {
+    id: row.id,
+    kidId: row.kid_id,
+    type: row.type as TransactionType,
+    amount: Number(row.amount),
+    date: row.date,
+    description: row.description ?? '',
+  }
 }
 
-function generateId() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
-}
-
-export function useAllowanceStore() {
-  const [kids, setKids] = useState<Kid[]>(() => loadData().kids)
-  const [transactions, setTransactions] = useState<Transaction[]>(() => loadData().transactions)
+export function useAllowanceStore(householdId: string | null) {
+  const [kids, setKids] = useState<Kid[]>([])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [dataLoading, setDataLoading] = useState(true)
+  const [dataError, setDataError] = useState<Error | null>(null)
 
   useEffect(() => {
-    saveData(kids, transactions)
-  }, [kids, transactions])
+    if (!householdId) {
+      setKids([])
+      setTransactions([])
+      setDataLoading(false)
+      return
+    }
+
+    if (!db) {
+      setDataError(new Error('Supabase is not configured'))
+      setDataLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    async function fetchData() {
+      setDataLoading(true)
+      setDataError(null)
+      try {
+        const { data: kidsRows, error: kidsErr } = await db
+          .from('kids')
+          .select('id, name, allowance_amount')
+          .eq('household_id', householdId)
+          .order('created_at', { ascending: true })
+
+        if (cancelled) return
+        if (kidsErr) {
+          setDataError(kidsErr as Error)
+          return
+        }
+
+        const kidList = (kidsRows ?? []).map(mapKid)
+        setKids(kidList)
+
+        if (kidList.length === 0) {
+          setTransactions([])
+          return
+        }
+
+        const kidIds = kidList.map((k) => k.id)
+        const { data: txRows, error: txErr } = await db
+          .from('transactions')
+          .select('id, kid_id, type, amount, date, description')
+          .in('kid_id', kidIds)
+          .order('date', { ascending: false })
+
+        if (cancelled) return
+        if (txErr) {
+          setDataError(txErr as Error)
+        } else {
+          setTransactions((txRows ?? []).map(mapTransaction))
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setDataError(err instanceof Error ? err : new Error(String(err)))
+        }
+      } finally {
+        if (!cancelled) {
+          setDataLoading(false)
+        }
+      }
+    }
+
+    fetchData()
+    return () => {
+      cancelled = true
+    }
+  }, [householdId])
 
   const addTransaction = useCallback(
-    (kidId: string, type: TransactionType, amount: number, description: string) => {
-      const transaction: Transaction = {
-        id: generateId(),
-        kidId,
-        type,
-        amount,
-        date: new Date().toISOString(),
-        description: description.trim() || (type === 'credit' ? 'Credit' : 'Expense'),
+    async (kidId: string, type: TransactionType, amount: number, description: string) => {
+      const desc = description.trim() || (type === 'credit' ? 'Credit' : 'Expense')
+      const { data, error: insertError } = await db
+        .from('transactions')
+        .insert({
+          kid_id: kidId,
+          type,
+          amount,
+          description: desc,
+          date: new Date().toISOString(),
+        })
+        .select('id, kid_id, type, amount, date, description')
+        .single()
+
+      if (insertError) {
+        setDataError(insertError as Error)
+        return
       }
-      setTransactions((prev) => [transaction, ...prev])
+      if (data) {
+        setTransactions((prev) => [mapTransaction(data), ...prev])
+      }
     },
     []
   )
@@ -73,11 +148,83 @@ export function useAllowanceStore() {
     [transactions]
   )
 
+  const deleteTransaction = useCallback(async (transactionId: string) => {
+    const { error: deleteError } = await db
+      .from('transactions')
+      .delete()
+      .eq('id', transactionId)
+
+    if (deleteError) {
+      setDataError(deleteError as Error)
+      return
+    }
+    setTransactions((prev) => prev.filter((t) => t.id !== transactionId))
+  }, [])
+
+  const addKid = useCallback(
+    async (name: string) => {
+      if (!householdId) return
+      const trimmed = name.trim()
+      if (!trimmed) return
+      const { data, error: insertError } = await db
+        .from('kids')
+        .insert({ household_id: householdId, name: trimmed })
+        .select('id, name, allowance_amount')
+        .single()
+
+      if (insertError) {
+        setDataError(insertError as Error)
+        return
+      }
+      if (data) {
+        setKids((prev) => [...prev, mapKid(data)])
+      }
+    },
+    [householdId]
+  )
+
+  const updateKidAllowance = useCallback(
+    async (kidId: string, amount: number | null) => {
+      if (!db) return
+      const { error: updateError } = await db
+        .from('kids')
+        .update({ allowance_amount: amount })
+        .eq('id', kidId)
+
+      if (updateError) {
+        setDataError(updateError as Error)
+        return
+      }
+      setKids((prev) =>
+        prev.map((k) => (k.id === kidId ? { ...k, allowanceAmount: amount } : k))
+      )
+    },
+    []
+  )
+
+  const getOrCreateViewToken = useCallback(async (kidId: string): Promise<string | null> => {
+    if (!db) return null
+    const { data, error: rpcError } = await db.rpc('get_or_create_view_token', {
+      p_kid_id: kidId,
+    })
+    if (rpcError) {
+      setDataError(rpcError as Error)
+      return null
+    }
+    return data as string
+  }, [])
+
   return {
     kids,
     transactions,
     addTransaction,
+    deleteTransaction,
+    addKid,
+    updateKidAllowance,
+    getOrCreateViewToken,
     getBalanceForKid,
     getTransactionsForKid,
+    loading: dataLoading,
+    error: dataError,
   }
 }
