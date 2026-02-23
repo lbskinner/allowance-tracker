@@ -11,6 +11,7 @@ import { AuthScreen } from './AuthScreen'
 import { JoinOrCreateHousehold } from './JoinOrCreateHousehold'
 import { InviteCoparentModal } from './InviteCoparentModal'
 import { ConfigureAllowanceModal } from './ConfigureAllowanceModal'
+import { ViewLinkModal } from './ViewLinkModal'
 
 type View = 'summary' | 'add' | 'addKid' | 'transactions'
 
@@ -25,7 +26,7 @@ export default function App() {
     joinHouseholdByCode,
     getInviteCode,
   } = useHousehold()
-  const { kids, addTransaction, deleteTransaction, addKid, updateKidAllowance, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
+  const { kids, addTransaction, deleteTransaction, addKid, updateKidAllowance, getOrCreateViewToken, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
   const loading = householdLoading || dataLoading
   const error = householdError ?? dataError
   const [view, setView] = useState<View>('summary')
@@ -33,6 +34,7 @@ export default function App() {
   const [transactionsKidId, setTransactionsKidId] = useState<string | null>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [configuringKid, setConfiguringKid] = useState<Kid | null>(null)
+  const [viewLinkKid, setViewLinkKid] = useState<Kid | null>(null)
 
   const selectedKid = transactionsKidId ? kids.find((k) => k.id === transactionsKidId) ?? null : null
 
@@ -132,6 +134,7 @@ export default function App() {
                 }
               }}
               onConfigureAllowance={(kid) => setConfiguringKid(kid)}
+              onGetViewLink={(kid) => setViewLinkKid(kid)}
               onViewTransactions={(kidId) => {
                 setTransactionsKidId(kidId)
                 setView('transactions')
@@ -143,6 +146,13 @@ export default function App() {
                 kid={configuringKid}
                 onSave={updateKidAllowance}
                 onClose={() => setConfiguringKid(null)}
+              />
+            )}
+            {viewLinkKid && (
+              <ViewLinkModal
+                kid={viewLinkKid}
+                getOrCreateViewToken={getOrCreateViewToken}
+                onClose={() => setViewLinkKid(null)}
               />
             )}
           </>
@@ -177,6 +187,7 @@ export default function App() {
               setView('summary')
             }}
             onDeleteTransaction={deleteTransaction}
+            onGetViewLink={(kid) => setViewLinkKid(kid)}
           />
         )}
       </main>

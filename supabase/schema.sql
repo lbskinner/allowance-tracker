@@ -64,6 +64,7 @@ create table public.kids (
   household_id uuid not null references public.households(id) on delete cascade,
   name text not null,
   allowance_amount numeric(12, 2) check (allowance_amount is null or allowance_amount > 0),
+  view_token text unique,
   created_at timestamptz not null default now()
 );
 

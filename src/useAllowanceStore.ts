@@ -202,6 +202,18 @@ export function useAllowanceStore(householdId: string | null) {
     []
   )
 
+  const getOrCreateViewToken = useCallback(async (kidId: string): Promise<string | null> => {
+    if (!db) return null
+    const { data, error: rpcError } = await db.rpc('get_or_create_view_token', {
+      p_kid_id: kidId,
+    })
+    if (rpcError) {
+      setDataError(rpcError as Error)
+      return null
+    }
+    return data as string
+  }, [])
+
   return {
     kids,
     transactions,
@@ -209,6 +221,7 @@ export function useAllowanceStore(householdId: string | null) {
     deleteTransaction,
     addKid,
     updateKidAllowance,
+    getOrCreateViewToken,
     getBalanceForKid,
     getTransactionsForKid,
     loading: dataLoading,

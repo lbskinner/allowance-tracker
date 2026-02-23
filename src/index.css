@@ -29,6 +29,55 @@ body {
   text-align: center;
 }
 
+.readonly-view {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.readonly-view-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.readonly-view-header h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.readonly-view-sub {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.readonly-view-main {
+  margin-top: 1rem;
+}
+
+.readonly-view-error {
+  text-align: center;
+  padding: 2rem;
+}
+
+.readonly-view-error h1 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.readonly-view-hint {
+  margin: 1rem 0 0;
+  font-size: 0.9375rem;
+  color: #555;
+}
+
+.readonly-transaction-list .transaction-main {
+  padding-right: 0;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -214,6 +263,27 @@ body {
 /* Summary */
 .summary h2,
 .form-section h2,
+.transaction-list-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.transaction-list-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.transaction-list-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .transaction-list-section h2 {
   margin: 0 0 1rem;
   font-size: 1.125rem;
@@ -279,19 +349,60 @@ body {
   flex-wrap: wrap;
 }
 
-.configure-allowance-btn {
+.card-menu {
+  position: relative;
+}
+
+.card-menu-btn {
   padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
+  font-size: 1rem;
+  line-height: 1;
   border-radius: 6px;
-  border: 1px solid #999;
+  border: 1px solid #ddd;
   background: #fff;
-  color: #555;
+  color: #666;
   cursor: pointer;
 }
 
-.configure-allowance-btn:hover {
+.card-menu-btn:hover {
   background: #f5f5f5;
   color: #333;
+}
+
+.card-menu-btn[aria-expanded="true"] {
+  background: #eee;
+  border-color: #ccc;
+}
+
+.card-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 10rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.card-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #333;
+  cursor: pointer;
+}
+
+.card-menu-dropdown button:hover {
+  background: #f0f0f0;
 }
 
 .add-allowance-btn {
@@ -780,4 +891,42 @@ body {
 .configure-allowance-actions .btn-primary,
 .configure-allowance-actions .btn-secondary {
   width: auto;
+}
+
+.view-link-modal h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.view-link-intro {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.view-link-loading {
+  margin: 0 0 1rem;
+  color: #666;
+}
+
+.view-link-url-wrap {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.view-link-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f9f9f9;
+  color: #333;
+}
+
+.view-link-close {
+  width: 100%;
 }
