@@ -3,7 +3,6 @@ import type { Kid } from './types'
 
 interface SummaryProps {
   kids: Kid[]
-  getBalanceForKid: (kidId: string) => number
   onAddTransaction: (type: 'credit' | 'expense', kidId: string) => void
   onAddAllowance: (kidId: string) => void
   onConfigureAllowance: (kid: Kid) => void
@@ -14,7 +13,6 @@ interface SummaryProps {
 
 export function Summary({
   kids,
-  getBalanceForKid,
   onAddTransaction,
   onAddAllowance,
   onConfigureAllowance,
@@ -82,8 +80,8 @@ export function Summary({
                   )}
                 </div>
               </div>
-              <span className="balance" data-negative={getBalanceForKid(kid.id) < 0}>
-                ${getBalanceForKid(kid.id).toFixed(2)}
+              <span className="balance" data-negative={kid.currentBalance < 0}>
+                ${kid.currentBalance.toFixed(2)}
               </span>
             </div>
             <div className="card-actions">

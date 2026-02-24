@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Transaction, TransactionType } from './types'
 import { supabase } from './lib/supabase'
+import { formatDate } from './utils/formatDate'
+import { runningBalances } from './utils/runningBalances'
 
 interface ReadOnlyViewProps {
   token: string
@@ -9,6 +11,7 @@ interface ReadOnlyViewProps {
 interface ReadOnlyData {
   kidName: string
   kidId: string
+  currentBalance: number
   transactions: Array<{
     id: string
     kid_id: string
@@ -19,39 +22,13 @@ interface ReadOnlyData {
   }>
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function runningBalances(transactions: Transaction[]): Map<string, number> {
-  const byDate = [...transactions].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  const map = new Map<string, number>()
-  let balance = 0
-  for (const t of byDate) {
-    balance += t.type === 'credit' ? t.amount : -t.amount
-    map.set(t.id, balance)
-  }
-  return map
-}
-
 export function ReadOnlyView({ token }: ReadOnlyViewProps) {
   const [data, setData] = useState<ReadOnlyData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!supabase)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!supabase) {
-      setError('App is not configured.')
-      setLoading(false)
-      return
-    }
+    if (!supabase) return
     let cancelled = false
     supabase
       .rpc('get_readonly_view', { p_token: token })
@@ -91,7 +68,11 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
     () => [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [transactions]
   )
-  const balances = useMemo(() => runningBalances(transactions), [transactions])
+  const currentBalance = data?.currentBalance ?? 0
+  const balances = useMemo(
+    () => runningBalances(transactions, currentBalance),
+    [transactions, currentBalance]
+  )
 
   if (loading) {
     return (
@@ -119,6 +100,9 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
         <header className="readonly-view-header">
           <h1>My allowance – {data.kidName}</h1>
           <p className="readonly-view-sub">Read-only · Last 30 days</p>
+          <p className="readonly-view-balance" data-negative={data.currentBalance < 0}>
+            Current balance: ${data.currentBalance.toFixed(2)}
+          </p>
         </header>
         <main className="readonly-view-main">
           {byDateNewestFirst.length === 0 ? (
@@ -133,7 +117,7 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
                     </span>
                     <span className="transaction-date">{formatDate(t.date)}</span>
                     <span className="transaction-balance" data-negative={balances.get(t.id)! < 0}>
-                      Total after this: ${balances.get(t.id)!.toFixed(2)}
+                      Running total: ${balances.get(t.id)!.toFixed(2)}
                     </span>
                   </div>
                   {t.description && (

@@ -26,7 +26,7 @@ export default function App() {
     joinHouseholdByCode,
     getInviteCode,
   } = useHousehold()
-  const { kids, addTransaction, deleteTransaction, addKid, updateKidAllowance, getOrCreateViewToken, getBalanceForKid, getTransactionsForKid, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
+  const { kids, addTransaction, deleteTransaction, addKid, updateKidAllowance, getOrCreateViewToken, getTransactionsForKid, loadTransactionsForKid, transactionsLoading, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
   const loading = householdLoading || dataLoading
   const error = householdError ?? dataError
   const [view, setView] = useState<View>('summary')
@@ -122,7 +122,6 @@ export default function App() {
           <>
             <Summary
               kids={kids}
-              getBalanceForKid={getBalanceForKid}
               onAddTransaction={(type, kidId) => {
                 setAddFormState({ type, kidId })
                 setView('add')
@@ -182,11 +181,13 @@ export default function App() {
           <TransactionList
             kid={selectedKid}
             transactions={getTransactionsForKid(selectedKid.id)}
+            transactionsLoading={transactionsLoading}
             onBack={() => {
               setTransactionsKidId(null)
               setView('summary')
             }}
             onDeleteTransaction={deleteTransaction}
+            loadTransactionsForKid={loadTransactionsForKid}
           />
         )}
       </main>
