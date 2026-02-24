@@ -4,11 +4,19 @@ import { supabase } from './lib/supabase'
 
 const db = supabase!
 
-function mapKid(row: { id: string; name: string; allowance_amount?: number | null }): Kid {
+export type DateRange = 30 | 60 | 90 | 'all'
+
+function mapKid(row: {
+  id: string
+  name: string
+  allowance_amount?: number | null
+  current_balance?: number | null
+}): Kid {
   return {
     id: row.id,
     name: row.name,
     allowanceAmount: row.allowance_amount != null ? Number(row.allowance_amount) : null,
+    currentBalance: row.current_balance != null ? Number(row.current_balance) : 0,
   }
 }
 
@@ -30,16 +38,25 @@ function mapTransaction(row: {
   }
 }
 
+function getDateRangeFilter(range: DateRange): { from: string } | null {
+  if (range === 'all') return null
+  const from = new Date()
+  from.setDate(from.getDate() - range)
+  from.setHours(0, 0, 0, 0)
+  return { from: from.toISOString() }
+}
+
 export function useAllowanceStore(householdId: string | null) {
   const [kids, setKids] = useState<Kid[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [transactionsKidId, setTransactionsKidId] = useState<string | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [dataError, setDataError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!householdId) {
       setKids([])
-      setTransactions([])
       setDataLoading(false)
       return
     }
@@ -52,13 +69,13 @@ export function useAllowanceStore(householdId: string | null) {
 
     let cancelled = false
 
-    async function fetchData() {
+    async function fetchKids() {
       setDataLoading(true)
       setDataError(null)
       try {
         const { data: kidsRows, error: kidsErr } = await db
           .from('kids')
-          .select('id, name, allowance_amount')
+          .select('id, name, allowance_amount, current_balance')
           .eq('household_id', householdId)
           .order('created_at', { ascending: true })
 
@@ -67,28 +84,7 @@ export function useAllowanceStore(householdId: string | null) {
           setDataError(kidsErr as Error)
           return
         }
-
-        const kidList = (kidsRows ?? []).map(mapKid)
-        setKids(kidList)
-
-        if (kidList.length === 0) {
-          setTransactions([])
-          return
-        }
-
-        const kidIds = kidList.map((k) => k.id)
-        const { data: txRows, error: txErr } = await db
-          .from('transactions')
-          .select('id, kid_id, type, amount, date, description')
-          .in('kid_id', kidIds)
-          .order('date', { ascending: false })
-
-        if (cancelled) return
-        if (txErr) {
-          setDataError(txErr as Error)
-        } else {
-          setTransactions((txRows ?? []).map(mapTransaction))
-        }
+        setKids((kidsRows ?? []).map(mapKid))
       } catch (err) {
         if (!cancelled) {
           setDataError(err instanceof Error ? err : new Error(String(err)))
@@ -100,10 +96,53 @@ export function useAllowanceStore(householdId: string | null) {
       }
     }
 
-    fetchData()
+    fetchKids()
     return () => {
       cancelled = true
     }
+  }, [householdId])
+
+  const [transactionsDateRange, setTransactionsDateRange] = useState<DateRange>(30)
+
+  const loadTransactionsForKid = useCallback(async (kidId: string, range: DateRange) => {
+    if (!db) return
+    setTransactionsKidId(kidId)
+    setTransactionsDateRange(range)
+    setTransactionsLoading(true)
+    setDataError(null)
+    try {
+      let query = db
+        .from('transactions')
+        .select('id, kid_id, type, amount, date, description')
+        .eq('kid_id', kidId)
+        .order('date', { ascending: false })
+
+      const filter = getDateRangeFilter(range)
+      if (filter) {
+        query = query.gte('date', filter.from)
+      }
+
+      const { data: txRows, error: txErr } = await query
+
+      if (txErr) {
+        setDataError(txErr as Error)
+        setTransactions([])
+      } else {
+        setTransactions((txRows ?? []).map(mapTransaction))
+      }
+    } finally {
+      setTransactionsLoading(false)
+    }
+  }, [])
+
+  const refreshKids = useCallback(async () => {
+    if (!householdId || !db) return
+    const { data: kidsRows, error: kidsErr } = await db
+      .from('kids')
+      .select('id, name, allowance_amount, current_balance')
+      .eq('household_id', householdId)
+      .order('created_at', { ascending: false })
+    if (!kidsErr && kidsRows) setKids(kidsRows.map(mapKid))
   }, [householdId])
 
   const addTransaction = useCallback(
@@ -125,41 +164,39 @@ export function useAllowanceStore(householdId: string | null) {
         setDataError(insertError as Error)
         return
       }
-      if (data) {
-        setTransactions((prev) => [mapTransaction(data), ...prev])
+      await refreshKids()
+      if (data && transactionsKidId === kidId) {
+        await loadTransactionsForKid(kidId, transactionsDateRange)
       }
     },
-    []
-  )
-
-  const getBalanceForKid = useCallback(
-    (kidId: string) => {
-      return transactions
-        .filter((t) => t.kidId === kidId)
-        .reduce((sum, t) => (t.type === 'credit' ? sum + t.amount : sum - t.amount), 0)
-    },
-    [transactions]
+    [refreshKids, transactionsKidId, transactionsDateRange, loadTransactionsForKid]
   )
 
   const getTransactionsForKid = useCallback(
     (kidId: string) => {
-      return transactions.filter((t) => t.kidId === kidId)
+      return transactionsKidId === kidId ? transactions : []
     },
-    [transactions]
+    [transactionsKidId, transactions]
   )
 
-  const deleteTransaction = useCallback(async (transactionId: string) => {
-    const { error: deleteError } = await db
-      .from('transactions')
-      .delete()
-      .eq('id', transactionId)
+  const deleteTransaction = useCallback(
+    async (transactionId: string) => {
+      const { error: deleteError } = await db
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId)
 
-    if (deleteError) {
-      setDataError(deleteError as Error)
-      return
-    }
-    setTransactions((prev) => prev.filter((t) => t.id !== transactionId))
-  }, [])
+      if (deleteError) {
+        setDataError(deleteError as Error)
+        return
+      }
+      await refreshKids()
+      if (transactionsKidId) {
+        await loadTransactionsForKid(transactionsKidId, transactionsDateRange)
+      }
+    },
+    [refreshKids, transactionsKidId, transactionsDateRange, loadTransactionsForKid]
+  )
 
   const addKid = useCallback(
     async (name: string) => {
@@ -169,7 +206,7 @@ export function useAllowanceStore(householdId: string | null) {
       const { data, error: insertError } = await db
         .from('kids')
         .insert({ household_id: householdId, name: trimmed })
-        .select('id, name, allowance_amount')
+        .select('id, name, allowance_amount, current_balance')
         .single()
 
       if (insertError) {
@@ -216,14 +253,14 @@ export function useAllowanceStore(householdId: string | null) {
 
   return {
     kids,
-    transactions,
     addTransaction,
     deleteTransaction,
     addKid,
     updateKidAllowance,
     getOrCreateViewToken,
-    getBalanceForKid,
     getTransactionsForKid,
+    loadTransactionsForKid,
+    transactionsLoading,
     loading: dataLoading,
     error: dataError,
   }

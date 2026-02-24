@@ -5,6 +5,8 @@ export interface Kid {
   name: string
   /** Configured allowance amount for "Add allowance" shortcut; null if not set */
   allowanceAmount: number | null
+  /** Current balance (credits − expenses); kept in sync by DB trigger */
+  currentBalance: number
 }
 
 export interface Transaction {

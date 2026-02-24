@@ -64,6 +64,7 @@ create table public.kids (
   household_id uuid not null references public.households(id) on delete cascade,
   name text not null,
   allowance_amount numeric(12, 2) check (allowance_amount is null or allowance_amount > 0),
+  current_balance numeric(12, 2) not null default 0,
   view_token text unique,
   created_at timestamptz not null default now()
 );
@@ -196,6 +197,58 @@ create policy "Household members can manage transactions"
       and household_members.user_id = auth.uid()
     )
   );
+
+-- Keep kids.current_balance in sync when transactions change
+create or replace function public.update_kid_current_balance(p_kid_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  bal numeric(12, 2);
+begin
+  select coalesce(
+    sum(case when type = 'credit' then amount else -amount end),
+    0
+  ) into bal
+  from public.transactions
+  where kid_id = p_kid_id;
+
+  update public.kids
+  set current_balance = bal
+  where id = p_kid_id;
+end;
+$$;
+
+create or replace function public.sync_kid_balance_on_transaction()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform public.update_kid_current_balance(new.kid_id);
+    return new;
+  elsif tg_op = 'DELETE' then
+    perform public.update_kid_current_balance(old.kid_id);
+    return old;
+  else
+    if old.kid_id = new.kid_id then
+      perform public.update_kid_current_balance(new.kid_id);
+    else
+      perform public.update_kid_current_balance(old.kid_id);
+      perform public.update_kid_current_balance(new.kid_id);
+    end if;
+    return new;
+  end if;
+end;
+$$;
+
+create trigger sync_kid_balance_on_transaction
+  after insert or update or delete on public.transactions
+  for each row execute function public.sync_kid_balance_on_transaction();
 
 comment on table public.households is 'One per family; shared by multiple users (e.g. both parents)';
 comment on table public.household_members is 'Which users belong to which household; all members have full access';

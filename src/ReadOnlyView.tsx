@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Transaction, TransactionType } from './types'
 import { supabase } from './lib/supabase'
+import { formatDate } from './utils/formatDate'
+import { runningBalances } from './utils/runningBalances'
 
 interface ReadOnlyViewProps {
   token: string
@@ -19,39 +21,13 @@ interface ReadOnlyData {
   }>
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso)
-  return d.toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
-function runningBalances(transactions: Transaction[]): Map<string, number> {
-  const byDate = [...transactions].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  const map = new Map<string, number>()
-  let balance = 0
-  for (const t of byDate) {
-    balance += t.type === 'credit' ? t.amount : -t.amount
-    map.set(t.id, balance)
-  }
-  return map
-}
-
 export function ReadOnlyView({ token }: ReadOnlyViewProps) {
   const [data, setData] = useState<ReadOnlyData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!supabase)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!supabase) {
-      setError('App is not configured.')
-      setLoading(false)
-      return
-    }
+    if (!supabase) return
     let cancelled = false
     supabase
       .rpc('get_readonly_view', { p_token: token })

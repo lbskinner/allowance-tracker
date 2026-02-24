@@ -11,7 +11,7 @@ Schema supports **multiple users per family** so both parents can log in and upd
 - **Auth:** Supabase `auth.users` for login. No separate “users” table.
 - **RLS:** Users only see data for households they’re a member of.
 
-**Migrations:** After `schema.sql`, run `supabase/invite-co-parent.sql` (invite code + join by code) and `supabase/kid-view-token.sql` (read-only kid view link) to get the full feature set.
+**Migrations:** After `schema.sql`, run `supabase/invite-co-parent.sql` (invite code + join by code), `supabase/kid-view-token.sql` (read-only kid view link), and `supabase/kids-current-balance.sql` (current_balance on kids + trigger) to get the full feature set. New installs from current `schema.sql` already include `current_balance` and the trigger.
 
 ---
 
@@ -50,10 +50,12 @@ Schema supports **multiple users per family** so both parents can log in and upd
 | `household_id`    | `uuid`          | no       | —                   | FK → `households(id)`                         |
 | `name`            | `text`          | no       | —                   | Kid’s name                                   |
 | `allowance_amount`| `numeric(12,2)` | yes      | —                   | Default amount for “Add allowance”; null = hide button |
+| `current_balance` | `numeric(12,2)` | no       | `0`                 | Running total (credits − expenses); kept in sync by trigger |
 | `view_token`      | `text`          | yes      | —                   | Unique token for read-only view link (last 30 days) |
 | `created_at`      | `timestamptz`   | no       | `now()`             | Created at                                   |
 
 - Kids belong to a **household**; every member can view and edit them.
+- `current_balance` is updated by trigger `sync_kid_balance_on_transaction` on insert/update/delete of `transactions`. For existing DBs, run **`supabase/kids-current-balance.sql`** to add the column, function, trigger, and backfill.
 - `view_token` is set by `get_or_create_view_token` (see RPCs); used for the bookmarkable read-only kid view.
 
 ---
