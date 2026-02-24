@@ -11,6 +11,7 @@ interface ReadOnlyViewProps {
 interface ReadOnlyData {
   kidName: string
   kidId: string
+  currentBalance: number
   transactions: Array<{
     id: string
     kid_id: string
@@ -67,7 +68,11 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
     () => [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [transactions]
   )
-  const balances = useMemo(() => runningBalances(transactions), [transactions])
+  const currentBalance = data?.currentBalance ?? 0
+  const balances = useMemo(
+    () => runningBalances(transactions, currentBalance),
+    [transactions, currentBalance]
+  )
 
   if (loading) {
     return (
@@ -95,6 +100,9 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
         <header className="readonly-view-header">
           <h1>My allowance – {data.kidName}</h1>
           <p className="readonly-view-sub">Read-only · Last 30 days</p>
+          <p className="readonly-view-balance" data-negative={data.currentBalance < 0}>
+            Current balance: ${data.currentBalance.toFixed(2)}
+          </p>
         </header>
         <main className="readonly-view-main">
           {byDateNewestFirst.length === 0 ? (

@@ -51,9 +51,10 @@ as $$
 declare
   k_id uuid;
   k_name text;
+  k_balance numeric(12, 2);
   tx_rows json;
 begin
-  select id, name into k_id, k_name
+  select id, name, coalesce(current_balance, 0) into k_id, k_name, k_balance
   from public.kids
   where view_token = nullif(trim(p_token), '');
 
@@ -82,6 +83,7 @@ begin
   return json_build_object(
     'kidName', k_name,
     'kidId', k_id,
+    'currentBalance', k_balance,
     'transactions', tx_rows
   );
 end;

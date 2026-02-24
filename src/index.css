@@ -54,6 +54,16 @@ body {
   color: #666;
 }
 
+.readonly-view-balance {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.readonly-view-balance[data-negative="true"] {
+  color: #c00;
+}
+
 .readonly-view-main {
   margin-top: 1rem;
 }

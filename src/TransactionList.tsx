@@ -32,10 +32,7 @@ export function TransactionList({
     [transactions]
   )
   const balances = useMemo(
-    () =>
-      kid
-        ? runningBalances(transactions, kid.currentBalance)
-        : runningBalances(transactions),
+    () => runningBalances(transactions, kid?.currentBalance ?? 0),
     [transactions, kid?.currentBalance]
   )
 

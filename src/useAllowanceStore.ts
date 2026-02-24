@@ -141,7 +141,7 @@ export function useAllowanceStore(householdId: string | null) {
       .from('kids')
       .select('id, name, allowance_amount, current_balance')
       .eq('household_id', householdId)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
     if (!kidsErr && kidsRows) setKids(kidsRows.map(mapKid))
   }, [householdId])
 
