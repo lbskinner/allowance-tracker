@@ -117,7 +117,7 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
                     </span>
                     <span className="transaction-date">{formatDate(t.date)}</span>
                     <span className="transaction-balance" data-negative={balances.get(t.id)! < 0}>
-                      Total after this: ${balances.get(t.id)!.toFixed(2)}
+                      Running total: ${balances.get(t.id)!.toFixed(2)}
                     </span>
                   </div>
                   {t.description && (
