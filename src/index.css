@@ -626,6 +626,12 @@ body {
   color: #555;
 }
 
+.transaction-added-by {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: #888;
+}
+
 .transaction-delete {
   margin-left: auto;
   padding: 0.25rem 0.5rem;

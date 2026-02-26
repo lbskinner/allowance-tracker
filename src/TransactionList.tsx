@@ -25,6 +25,7 @@ export function TransactionList({
 
   useEffect(() => {
     if (kid) loadTransactionsForKid(kid.id, dateRange)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kid?.id, dateRange, loadTransactionsForKid])
 
   const byDateNewestFirst = useMemo(
@@ -92,6 +93,9 @@ export function TransactionList({
               </div>
               {t.description && (
                 <div className="transaction-desc">{t.description}</div>
+              )}
+              {t.addedByDisplay && (
+                <div className="transaction-added-by">by {t.addedByDisplay}</div>
               )}
             </li>
           ))}

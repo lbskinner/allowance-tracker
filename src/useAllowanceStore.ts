@@ -27,6 +27,7 @@ function mapTransaction(row: {
   amount: number
   date: string
   description: string
+  added_by_display?: string | null
 }): Transaction {
   return {
     id: row.id,
@@ -35,6 +36,7 @@ function mapTransaction(row: {
     amount: Number(row.amount),
     date: row.date,
     description: row.description ?? '',
+    addedByDisplay: row.added_by_display ?? null,
   }
 }
 
@@ -113,7 +115,7 @@ export function useAllowanceStore(householdId: string | null) {
     try {
       let query = db
         .from('transactions')
-        .select('id, kid_id, type, amount, date, description')
+        .select('id, kid_id, type, amount, date, description, added_by_display')
         .eq('kid_id', kidId)
         .order('date', { ascending: false })
 
@@ -146,7 +148,13 @@ export function useAllowanceStore(householdId: string | null) {
   }, [householdId])
 
   const addTransaction = useCallback(
-    async (kidId: string, type: TransactionType, amount: number, description: string) => {
+    async (
+      kidId: string,
+      type: TransactionType,
+      amount: number,
+      description: string,
+      addedByDisplay?: string | null
+    ) => {
       const desc = description.trim() || (type === 'credit' ? 'Credit' : 'Expense')
       const { data, error: insertError } = await db
         .from('transactions')
@@ -156,8 +164,9 @@ export function useAllowanceStore(householdId: string | null) {
           amount,
           description: desc,
           date: new Date().toISOString(),
+          added_by_display: addedByDisplay ?? null,
         })
-        .select('id, kid_id, type, amount, date, description')
+        .select('id, kid_id, type, amount, date, description, added_by_display')
         .single()
 
       if (insertError) {

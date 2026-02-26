@@ -11,7 +11,7 @@ Schema supports **multiple users per family** so both parents can log in and upd
 - **Auth:** Supabase `auth.users` for login. No separate “users” table.
 - **RLS:** Users only see data for households they’re a member of.
 
-**Migrations:** After `schema.sql`, run `supabase/invite-co-parent.sql` (invite code + join by code), `supabase/kid-view-token.sql` (read-only kid view link), and `supabase/kids-current-balance.sql` (current_balance on kids + trigger) to get the full feature set. New installs from current `schema.sql` already include `current_balance` and the trigger.
+**Migrations:** After `schema.sql`, run `supabase/invite-co-parent.sql` (invite code + join by code), `supabase/kid-view-token.sql` (read-only kid view link), `supabase/kids-current-balance.sql` (current_balance on kids + trigger), and `supabase/transactions-added-by.sql` (added_by_display on transactions) to get the full feature set. New installs from current `schema.sql` already include `current_balance`, the trigger, and `added_by_display`.
 
 ---
 
@@ -62,17 +62,19 @@ Schema supports **multiple users per family** so both parents can log in and upd
 
 ## 4. `transactions`
 
-| Column        | Type            | Nullable | Default             | Description     |
-|---------------|-----------------|----------|---------------------|-----------------|
-| `id`          | `uuid`          | no       | `gen_random_uuid()` | Primary key     |
-| `kid_id`      | `uuid`          | no       | —                   | FK → `kids(id)` |
-| `type`        | `text`          | no       | —                   | `'credit'` or `'expense'` |
-| `amount`      | `numeric(12,2)` | no       | —                   | Positive amount |
-| `date`        | `timestamptz`   | no       | `now()`             | When it happened |
-| `description` | `text`          | no       | `''`                | Optional note   |
-| `created_at`  | `timestamptz`   | no       | `now()`             | Created at      |
+| Column             | Type            | Nullable | Default             | Description     |
+|--------------------|-----------------|----------|---------------------|-----------------|
+| `id`               | `uuid`          | no       | `gen_random_uuid()` | Primary key     |
+| `kid_id`           | `uuid`          | no       | —                   | FK → `kids(id)` |
+| `type`             | `text`          | no       | —                   | `'credit'` or `'expense'` |
+| `amount`           | `numeric(12,2)` | no       | —                   | Positive amount |
+| `date`             | `timestamptz`   | no       | `now()`             | When it happened |
+| `description`      | `text`          | no       | `''`                | Optional note   |
+| `added_by_display` | `text`          | yes      | —                   | Who added (e.g. email prefix); null for older rows |
+| `created_at`       | `timestamptz`   | no       | `now()`             | Created at      |
 
 - Access is controlled via kid → household → household_members.
+- `added_by_display` is set by the app when inserting (e.g. from the current user’s email prefix); used to show “by X” in the transaction list and read-only view.
 
 ---
 

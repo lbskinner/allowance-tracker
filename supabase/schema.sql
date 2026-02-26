@@ -69,7 +69,7 @@ create table public.kids (
   created_at timestamptz not null default now()
 );
 
--- 4. Transactions (unchanged; ownership via kid → household)
+-- 4. Transactions (ownership via kid → household)
 create table public.transactions (
   id uuid primary key default gen_random_uuid(),
   kid_id uuid not null references public.kids(id) on delete cascade,
@@ -77,6 +77,7 @@ create table public.transactions (
   amount numeric(12, 2) not null check (amount > 0),
   date timestamptz not null default now(),
   description text not null default '',
+  added_by_display text,
   created_at timestamptz not null default now()
 );
 

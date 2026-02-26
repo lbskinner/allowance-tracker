@@ -37,6 +37,7 @@ export default function App() {
   const [viewLinkKid, setViewLinkKid] = useState<Kid | null>(null)
 
   const selectedKid = transactionsKidId ? kids.find((k) => k.id === transactionsKidId) ?? null : null
+  const addedBy = session?.user?.email?.split('@')[0] ?? ''
 
   if (authLoading) {
     return (
@@ -129,7 +130,7 @@ export default function App() {
               onAddAllowance={(kidId) => {
                 const kid = kids.find((k) => k.id === kidId)
                 if (kid?.allowanceAmount != null) {
-                  addTransaction(kidId, 'credit', kid.allowanceAmount, 'Allowance')
+                  addTransaction(kidId, 'credit', kid.allowanceAmount, 'Allowance', addedBy)
                 }
               }}
               onConfigureAllowance={(kid) => setConfiguringKid(kid)}
@@ -169,7 +170,9 @@ export default function App() {
             kids={kids}
             selectedKidId={addFormState.kidId}
             type={addFormState.type}
-            onSubmit={addTransaction}
+            onSubmit={(kidId, type, amount, description) =>
+              addTransaction(kidId, type, amount, description, addedBy)
+            }
             onCancel={() => {
               setAddFormState(null)
               setView('summary')
