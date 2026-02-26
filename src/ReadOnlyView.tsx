@@ -19,6 +19,7 @@ interface ReadOnlyData {
     amount: number
     date: string
     description: string
+    added_by_display?: string | null
   }>
 }
 
@@ -61,6 +62,7 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
         amount: Number(t.amount),
         date: t.date,
         description: t.description ?? '',
+        addedByDisplay: t.added_by_display ?? null,
       })),
     [data?.transactions]
   )
@@ -122,6 +124,9 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
                   </div>
                   {t.description && (
                     <div className="transaction-desc">{t.description}</div>
+                  )}
+                  {t.addedByDisplay && (
+                    <div className="transaction-added-by">by {t.addedByDisplay}</div>
                   )}
                 </li>
               ))}

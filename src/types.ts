@@ -16,6 +16,8 @@ export interface Transaction {
   amount: number
   date: string // ISO date string
   description: string
+  /** Display name of who added (e.g. email prefix); null for older rows */
+  addedByDisplay?: string | null
 }
 
 export interface AllowanceData {

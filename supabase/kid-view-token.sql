@@ -70,7 +70,8 @@ begin
         'type', t.type,
         'amount', t.amount,
         'date', t.date,
-        'description', coalesce(t.description, '')
+        'description', coalesce(t.description, ''),
+        'added_by_display', t.added_by_display
       )
       order by t.date desc
     ),
