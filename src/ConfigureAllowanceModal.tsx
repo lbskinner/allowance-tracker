@@ -53,14 +53,9 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
     }
   }
 
-  const handleClear = async () => {
-    setSaving(true)
-    try {
-      await onSave(kid.id, null, [])
-      onClose()
-    } finally {
-      setSaving(false)
-    }
+  const handleClear = () => {
+    setAmount('')
+    setPresets(['', '', ''])
   }
 
   return (

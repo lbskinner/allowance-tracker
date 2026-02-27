@@ -26,7 +26,18 @@ export default function App() {
     joinHouseholdByCode,
     getInviteCode,
   } = useHousehold()
-  const { kids, addTransaction, deleteTransaction, addKid, updateKidSettings, getOrCreateViewToken, getTransactionsForKid, loadTransactionsForKid, transactionsLoading, loading: dataLoading, error: dataError } = useAllowanceStore(householdId)
+  const {
+    kids,
+    addTransaction,
+    deleteTransaction,
+    addKid,
+    updateKidSettings,
+    getOrCreateViewToken,
+    getTransactionsForKid,
+    loadTransactionsForKid,
+    transactionsLoading,
+    loading: dataLoading,
+    error: dataError } = useAllowanceStore(householdId)
   const loading = householdLoading || dataLoading
   const error = householdError ?? dataError
   const [view, setView] = useState<View>('summary')
