@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Kid, Transaction, TransactionType } from './types'
-import { supabase } from './lib/supabase'
+import type { Kid, Transaction, TransactionType } from '../types/types'
+import { supabase } from '../lib/supabase'
 
 const db = supabase!
 
@@ -22,6 +22,21 @@ function mapKid(row: {
     presetAmounts,
     currentBalance: row.current_balance != null ? Number(row.current_balance) : 0,
   }
+}
+
+async function fetchKidsForHousehold(householdId: string | null) {
+  if (!householdId) return []
+  const { data: kidsRows, error } = await db
+    .from('kids')
+    .select('id, name, allowance_amount, current_balance, preset_amounts')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    throw error
+  }
+
+  return (kidsRows ?? []).map(mapKid)
 }
 
 function mapTransaction(row: {
@@ -79,18 +94,9 @@ export function useAllowanceStore(householdId: string | null) {
       setDataLoading(true)
       setDataError(null)
       try {
-        const { data: kidsRows, error: kidsErr } = await db
-          .from('kids')
-          .select('id, name, allowance_amount, current_balance, preset_amounts')
-          .eq('household_id', householdId)
-          .order('created_at', { ascending: true })
-
         if (cancelled) return
-        if (kidsErr) {
-          setDataError(kidsErr as Error)
-          return
-        }
-        setKids((kidsRows ?? []).map(mapKid))
+        const kidsList = await fetchKidsForHousehold(householdId)
+        setKids(kidsList)
       } catch (err) {
         if (!cancelled) {
           setDataError(err instanceof Error ? err : new Error(String(err)))
@@ -143,12 +149,12 @@ export function useAllowanceStore(householdId: string | null) {
 
   const refreshKids = useCallback(async () => {
     if (!householdId || !db) return
-    const { data: kidsRows, error: kidsErr } = await db
-      .from('kids')
-.select('id, name, allowance_amount, current_balance, preset_amounts')
-    .eq('household_id', householdId)
-      .order('created_at', { ascending: true })
-    if (!kidsErr && kidsRows) setKids(kidsRows.map(mapKid))
+    try {
+      const kidsList = await fetchKidsForHousehold(householdId)
+      setKids(kidsList)
+    } catch (err) {
+      setDataError(err instanceof Error ? err : new Error(String(err)))
+    }
   }, [householdId])
 
   const addTransaction = useCallback(

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import type { Kid, Transaction } from './types'
-import type { DateRange } from './useAllowanceStore'
-import { runningBalances } from './utils/runningBalances'
+import type { Kid, Transaction } from '../types/types'
+import type { DateRange } from '../hooks/useAllowanceStore'
+import { runningBalances } from '../utils/runningBalances'
 import { TransactionListItems } from './TransactionListItems'
 
 interface TransactionListProps {
@@ -24,9 +24,9 @@ export function TransactionList({
   const [dateRange, setDateRange] = useState<DateRange>(30)
 
   useEffect(() => {
-    if (kid) loadTransactionsForKid(kid.id, dateRange)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kid?.id, dateRange, loadTransactionsForKid])
+    if (!kid) return
+    loadTransactionsForKid(kid.id, dateRange)
+  }, [kid, dateRange, loadTransactionsForKid])
 
   const byDateNewestFirst = useMemo(
     () => [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -75,3 +75,4 @@ export function TransactionList({
     </section>
   )
 }
+

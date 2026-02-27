@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Kid } from './types'
+import type { Kid } from '../types/types'
 
 interface ViewLinkModalProps {
   kid: Kid
@@ -76,3 +76,4 @@ export function ViewLinkModal({ kid, getOrCreateViewToken, onClose }: ViewLinkMo
     </div>
   )
 }
+

@@ -1,17 +1,20 @@
 import { useState } from 'react'
-import type { Kid } from './types'
+import type { Kid } from './types/types'
 import { useAuth } from './contexts/useAuth'
 import { useHousehold } from './hooks/useHousehold'
-import { useAllowanceStore } from './useAllowanceStore'
-import { Summary } from './Summary'
-import { AddTransactionForm } from './AddTransactionForm'
-import { AddKidForm } from './AddKidForm'
-import { TransactionList } from './TransactionList'
-import { AuthScreen } from './AuthScreen'
-import { JoinOrCreateHousehold } from './JoinOrCreateHousehold'
-import { InvitePartnerModal } from './InvitePartnerModal'
-import { ConfigureAllowanceModal } from './ConfigureAllowanceModal'
-import { ViewLinkModal } from './ViewLinkModal'
+import { useAllowanceStore } from './hooks/useAllowanceStore'
+import { Summary } from './components/Summary'
+import { AddTransactionForm } from './components/AddTransactionForm'
+import { AddKidForm } from './components/AddKidForm'
+import { TransactionList } from './components/TransactionList'
+import { AuthScreen } from './components/AuthScreen'
+import { JoinOrCreateHousehold } from './components/JoinOrCreateHousehold'
+import { InvitePartnerModal } from './components/InvitePartnerModal'
+import { ConfigureAllowanceModal } from './components/ConfigureAllowanceModal'
+import { ViewLinkModal } from './components/ViewLinkModal'
+import { getDisplayNameFromEmail } from './utils/displayName'
+import { FullScreenLoading } from './components/FullScreenLoading'
+import { FullScreenError } from './components/FullScreenError'
 
 type View = 'summary' | 'add' | 'addKid' | 'transactions'
 
@@ -48,14 +51,10 @@ export default function App() {
   const [viewLinkKid, setViewLinkKid] = useState<Kid | null>(null)
 
   const selectedKid = transactionsKidId ? kids.find((k) => k.id === transactionsKidId) ?? null : null
-  const addedBy = session?.user?.email?.split('@')[0] ?? ''
+  const addedBy = getDisplayNameFromEmail(session?.user?.email)
 
   if (authLoading) {
-    return (
-      <div className="app app-loading">
-        <p>Loading…</p>
-      </div>
-    )
+    return <FullScreenLoading>Loading…</FullScreenLoading>
   }
 
   if (!session) {
@@ -63,11 +62,7 @@ export default function App() {
   }
 
   if (!householdId && householdLoading) {
-    return (
-      <div className="app app-loading">
-        <p>Loading…</p>
-      </div>
-    )
+    return <FullScreenLoading>Loading…</FullScreenLoading>
   }
 
   if (!householdId) {
@@ -91,19 +86,11 @@ export default function App() {
   }
 
   if (loading) {
-    return (
-      <div className="app app-loading">
-        <p>Loading your data…</p>
-      </div>
-    )
+    return <FullScreenLoading>Loading your data…</FullScreenLoading>
   }
 
   if (error) {
-    return (
-      <div className="app app-loading">
-        <p className="app-error">Something went wrong: {error.message}</p>
-      </div>
-    )
+    return <FullScreenError message={`Something went wrong: ${error.message}`} />
   }
 
   return (

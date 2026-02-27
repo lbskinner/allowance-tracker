@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { Kid } from './types'
+import type { Kid } from '../types/types'
 
 const PRESET_SLOTS = 3
 
@@ -60,7 +60,12 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
 
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div className="modal configure-allowance-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="configure-allowance-title">
+      <div
+        className="modal configure-allowance-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="configure-allowance-title"
+      >
         <h2 id="configure-allowance-title">Allowance amount for {kid.name}</h2>
         <p className="configure-allowance-intro">
           Set a default amount for the &quot;Add allowance&quot; button. Leave empty to hide the button.
@@ -118,3 +123,4 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
     </div>
   )
 }
+

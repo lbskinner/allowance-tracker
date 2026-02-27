@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import type { Transaction } from './types'
-import { formatDate } from './utils/formatDate'
+import type { Transaction } from '../types/types'
+import { formatDate } from '../utils/formatDate'
+import { formatSignedCurrency } from '../utils/formatAmount'
 
 interface TransactionListItemsProps {
   /** Transactions in display order (e.g. newest first) */
@@ -28,7 +29,7 @@ export function TransactionListItems({
         <li key={t.id} className="transaction-item" data-type={t.type}>
           <div className="transaction-main">
             <span className="transaction-amount" data-type={t.type}>
-              {t.type === 'credit' ? '+' : '−'}${t.amount.toFixed(2)}
+              {formatSignedCurrency(t.type, t.amount)}
             </span>
             <span className="transaction-date">{formatDate(t.date)}</span>
             <span className="transaction-balance" data-negative={(balances.get(t.id) ?? 0) < 0}>
@@ -79,3 +80,4 @@ export function TransactionListItems({
     </ul>
   )
 }
+

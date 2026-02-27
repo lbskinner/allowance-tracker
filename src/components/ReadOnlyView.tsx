@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Transaction, TransactionType } from './types'
-import { supabase } from './lib/supabase'
-import { runningBalances } from './utils/runningBalances'
+import type { Transaction, TransactionType } from '../types/types'
+import { supabase } from '../lib/supabase'
+import { runningBalances } from '../utils/runningBalances'
 import { TransactionListItems } from './TransactionListItems'
 
 interface ReadOnlyViewProps {
