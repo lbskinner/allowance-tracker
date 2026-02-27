@@ -91,7 +91,7 @@ export function Summary({
                   onClick={() => onAddAllowance(kid.id)}
                   className="add-allowance-btn"
                 >
-                  Add allowance (${kid.allowanceAmount.toFixed(2)})
+                  Add (${kid.allowanceAmount.toFixed(2)})
                 </button>
               )}
               <button type="button" onClick={() => onAddTransaction('credit', kid.id)}>

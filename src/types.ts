@@ -5,6 +5,8 @@ export interface Kid {
   name: string
   /** Configured allowance amount for "Add allowance" shortcut; null if not set */
   allowanceAmount: number | null
+  /** Up to 3 preset amounts for quick-select in Add Transaction form */
+  presetAmounts: number[]
   /** Current balance (credits − expenses); kept in sync by DB trigger */
   currentBalance: number
 }

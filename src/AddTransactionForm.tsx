@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useMemo, type FormEvent } from 'react'
 import type { Kid } from './types'
 import type { TransactionType } from './types'
 
@@ -20,6 +20,16 @@ export function AddTransactionForm({
   const [kidId, setKidId] = useState(selectedKidId ?? kids[0]?.id ?? '')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
+
+  const selectedKid = useMemo(
+    () => kids.find((k) => k.id === kidId) ?? null,
+    [kids, kidId]
+  )
+
+  const quickAmounts = useMemo(
+    () => selectedKid?.presetAmounts ?? [],
+    [selectedKid?.presetAmounts]
+  )
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -50,10 +60,29 @@ export function AddTransactionForm({
             ))}
           </select>
         </label>
-        <label>
-          Amount ($)
+        <label htmlFor="transaction-amount">
+          <div className="amount-label-row">
+            <span>Amount ($)</span>
+            {type === 'credit' && quickAmounts.length > 0 && (
+              <span className="amount-quick-buttons">
+                {quickAmounts.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className="quick-amount"
+                    onClick={() => setAmount(String(preset))}
+                    aria-label={`Set amount to $${preset}`}
+                  >
+                    ${preset}
+                  </button>
+                ))}
+              </span>
+            )}
+          </div>
           <input
+            id="transaction-amount"
             type="number"
+            inputMode="decimal"
             min="0"
             step="0.01"
             value={amount}

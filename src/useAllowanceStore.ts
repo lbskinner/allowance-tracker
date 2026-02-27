@@ -11,11 +11,15 @@ function mapKid(row: {
   name: string
   allowance_amount?: number | null
   current_balance?: number | null
+  preset_amounts?: number[] | null
 }): Kid {
+  const raw = row.preset_amounts ?? []
+  const presetAmounts = (Array.isArray(raw) ? raw : []).slice(0, 3).map(Number).filter((n) => !Number.isNaN(n) && n > 0)
   return {
     id: row.id,
     name: row.name,
     allowanceAmount: row.allowance_amount != null ? Number(row.allowance_amount) : null,
+    presetAmounts,
     currentBalance: row.current_balance != null ? Number(row.current_balance) : 0,
   }
 }
@@ -77,7 +81,7 @@ export function useAllowanceStore(householdId: string | null) {
       try {
         const { data: kidsRows, error: kidsErr } = await db
           .from('kids')
-          .select('id, name, allowance_amount, current_balance')
+          .select('id, name, allowance_amount, current_balance, preset_amounts')
           .eq('household_id', householdId)
           .order('created_at', { ascending: true })
 
@@ -141,8 +145,8 @@ export function useAllowanceStore(householdId: string | null) {
     if (!householdId || !db) return
     const { data: kidsRows, error: kidsErr } = await db
       .from('kids')
-      .select('id, name, allowance_amount, current_balance')
-      .eq('household_id', householdId)
+.select('id, name, allowance_amount, current_balance, preset_amounts')
+    .eq('household_id', householdId)
       .order('created_at', { ascending: true })
     if (!kidsErr && kidsRows) setKids(kidsRows.map(mapKid))
   }, [householdId])
@@ -215,7 +219,7 @@ export function useAllowanceStore(householdId: string | null) {
       const { data, error: insertError } = await db
         .from('kids')
         .insert({ household_id: householdId, name: trimmed })
-        .select('id, name, allowance_amount, current_balance')
+        .select('id, name, allowance_amount, current_balance, preset_amounts')
         .single()
 
       if (insertError) {
@@ -229,12 +233,27 @@ export function useAllowanceStore(householdId: string | null) {
     [householdId]
   )
 
-  const updateKidAllowance = useCallback(
-    async (kidId: string, amount: number | null) => {
+  const updateKidSettings = useCallback(
+    async (
+      kidId: string,
+      settings: { allowanceAmount?: number | null; presetAmounts?: number[] }
+    ) => {
       if (!db) return
+      const updates: { allowance_amount?: number | null; preset_amounts?: number[] } = {}
+      if (settings.allowanceAmount !== undefined) {
+        updates.allowance_amount = settings.allowanceAmount
+      }
+      if (settings.presetAmounts !== undefined) {
+        const valid = settings.presetAmounts
+          .filter((n) => typeof n === 'number' && !Number.isNaN(n) && n > 0)
+          .slice(0, 3)
+          .map((n) => Math.round(n * 100) / 100)
+        updates.preset_amounts = valid
+      }
+      if (Object.keys(updates).length === 0) return
       const { error: updateError } = await db
         .from('kids')
-        .update({ allowance_amount: amount })
+        .update(updates)
         .eq('id', kidId)
 
       if (updateError) {
@@ -242,7 +261,21 @@ export function useAllowanceStore(householdId: string | null) {
         return
       }
       setKids((prev) =>
-        prev.map((k) => (k.id === kidId ? { ...k, allowanceAmount: amount } : k))
+        prev.map((k) => {
+          if (k.id !== kidId) return k
+          return {
+            ...k,
+            ...(settings.allowanceAmount !== undefined && {
+              allowanceAmount: settings.allowanceAmount,
+            }),
+            ...(settings.presetAmounts !== undefined && {
+              presetAmounts: settings.presetAmounts
+                .filter((n) => typeof n === 'number' && !Number.isNaN(n) && n > 0)
+                .slice(0, 3)
+                .map((n) => Math.round(n * 100) / 100),
+            }),
+          }
+        })
       )
     },
     []
@@ -265,7 +298,7 @@ export function useAllowanceStore(householdId: string | null) {
     addTransaction,
     deleteTransaction,
     addKid,
-    updateKidAllowance,
+    updateKidSettings,
     getOrCreateViewToken,
     getTransactionsForKid,
     loadTransactionsForKid,
