@@ -1,19 +1,36 @@
 import { useState, useEffect } from 'react'
 import type { Kid } from './types'
 
+const PRESET_SLOTS = 3
+
 interface ConfigureAllowanceModalProps {
   kid: Kid | null
-  onSave: (kidId: string, amount: number | null) => Promise<void>
+  onSave: (kidId: string, allowanceAmount: number | null, presetAmounts: number[]) => Promise<void>
   onClose: () => void
+}
+
+function parsePresets(values: string[]): number[] {
+  return values
+    .map((s) => parseFloat(s.trim()))
+    .filter((n) => !Number.isNaN(n) && n > 0)
+    .map((n) => Math.round(n * 100) / 100)
+    .slice(0, PRESET_SLOTS)
 }
 
 export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllowanceModalProps) {
   const [amount, setAmount] = useState('')
+  const [presets, setPresets] = useState<string[]>(['', '', ''])
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (kid) {
       setAmount(kid.allowanceAmount != null ? String(kid.allowanceAmount) : '')
+      const fromKid = kid.presetAmounts ?? []
+      setPresets([
+        fromKid[0] != null ? String(fromKid[0]) : '',
+        fromKid[1] != null ? String(fromKid[1]) : '',
+        fromKid[2] != null ? String(fromKid[2]) : '',
+      ])
     }
   }, [kid])
 
@@ -24,11 +41,12 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
     setSaving(true)
     try {
       const num = parseFloat(amount.trim())
-      const value =
+      const allowanceValue =
         amount.trim() === '' || Number.isNaN(num) || num <= 0
           ? null
           : Math.round(num * 100) / 100
-      await onSave(kid.id, value)
+      const presetAmounts = parsePresets(presets)
+      await onSave(kid.id, allowanceValue, presetAmounts)
       onClose()
     } finally {
       setSaving(false)
@@ -38,7 +56,7 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
   const handleClear = async () => {
     setSaving(true)
     try {
-      await onSave(kid.id, null)
+      await onSave(kid.id, null, [])
       onClose()
     } finally {
       setSaving(false)
@@ -65,6 +83,30 @@ export function ConfigureAllowanceModal({ kid, onSave, onClose }: ConfigureAllow
             className="configure-allowance-input"
             aria-label="Allowance amount"
           />
+          <p className="configure-allowance-intro configure-allowance-presets-label">
+            Quick amounts for Add transaction (up to 3)
+          </p>
+          <div className="configure-allowance-presets">
+            {[0, 1, 2].map((i) => (
+              <label key={i} className="configure-allowance-preset-row">
+                <span className="configure-allowance-preset-label">Amount {i + 1} ($)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Optional"
+                  value={presets[i] ?? ''}
+                  onChange={(e) => {
+                    const next = [...presets]
+                    next[i] = e.target.value
+                    setPresets(next)
+                  }}
+                  className="configure-allowance-input"
+                  aria-label={`Quick amount ${i + 1}`}
+                />
+              </label>
+            ))}
+          </div>
           <div className="configure-allowance-actions">
             <button type="submit" disabled={saving} className="btn-primary">
               {saving ? 'Saving…' : 'Save'}

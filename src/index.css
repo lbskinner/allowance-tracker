@@ -478,6 +478,36 @@ body {
   color: #666;
 }
 
+.amount-label-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.amount-quick-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.transaction-form .quick-amount {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f0f0f0;
+  color: #333;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.transaction-form .quick-amount:hover {
+  background: #e5e5e5;
+  border-color: #ccc;
+}
+
 .transaction-form select,
 .transaction-form input[type="number"],
 .transaction-form input[type="text"] {
@@ -896,6 +926,30 @@ body {
   border-radius: 8px;
   margin-bottom: 1rem;
   box-sizing: border-box;
+}
+
+.configure-allowance-presets-label {
+  margin-top: 0.5rem;
+}
+
+.configure-allowance-presets {
+  margin-bottom: 1rem;
+}
+
+.configure-allowance-preset-row {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.configure-allowance-preset-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+}
+
+.configure-allowance-preset-row .configure-allowance-input {
+  margin-bottom: 0;
 }
 
 .configure-allowance-actions {
