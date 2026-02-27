@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { Kid, Transaction } from './types'
 import type { DateRange } from './useAllowanceStore'
-import { formatDate } from './utils/formatDate'
 import { runningBalances } from './utils/runningBalances'
+import { TransactionListItems } from './TransactionListItems'
 
 interface TransactionListProps {
   kid: Kid | null
@@ -66,40 +66,11 @@ export function TransactionList({
       ) : byDateNewestFirst.length === 0 ? (
         <p className="empty-state">No transactions in this range.</p>
       ) : (
-        <ul className="transaction-list">
-          {byDateNewestFirst.map((t) => (
-            <li key={t.id} className="transaction-item" data-type={t.type}>
-              <div className="transaction-main">
-                <span className="transaction-amount" data-type={t.type}>
-                  {t.type === 'credit' ? '+' : '−'}${t.amount.toFixed(2)}
-                </span>
-                <span className="transaction-date">{formatDate(t.date)}</span>
-                <span className="transaction-balance" data-negative={balances.get(t.id)! < 0}>
-                  Running total: ${balances.get(t.id)!.toFixed(2)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Delete this transaction?')) {
-                      onDeleteTransaction(t.id)
-                    }
-                  }}
-                  className="transaction-delete"
-                  title="Delete transaction"
-                  aria-label="Delete transaction"
-                >
-                  Delete
-                </button>
-              </div>
-              {t.description && (
-                <div className="transaction-desc">{t.description}</div>
-              )}
-              {t.addedByDisplay && (
-                <div className="transaction-added-by">by {t.addedByDisplay}</div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <TransactionListItems
+          transactions={byDateNewestFirst}
+          balances={balances}
+          onDelete={onDeleteTransaction}
+        />
       )}
     </section>
   )

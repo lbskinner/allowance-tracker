@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Transaction, TransactionType } from './types'
 import { supabase } from './lib/supabase'
-import { formatDate } from './utils/formatDate'
 import { runningBalances } from './utils/runningBalances'
+import { TransactionListItems } from './TransactionListItems'
 
 interface ReadOnlyViewProps {
   token: string
@@ -110,27 +110,11 @@ export function ReadOnlyView({ token }: ReadOnlyViewProps) {
           {byDateNewestFirst.length === 0 ? (
             <p className="empty-state">No transactions in the last 30 days.</p>
           ) : (
-            <ul className="transaction-list readonly-transaction-list">
-              {byDateNewestFirst.map((t) => (
-                <li key={t.id} className="transaction-item" data-type={t.type}>
-                  <div className="transaction-main">
-                    <span className="transaction-amount" data-type={t.type}>
-                      {t.type === 'credit' ? '+' : '−'}${t.amount.toFixed(2)}
-                    </span>
-                    <span className="transaction-date">{formatDate(t.date)}</span>
-                    <span className="transaction-balance" data-negative={balances.get(t.id)! < 0}>
-                      Running total: ${balances.get(t.id)!.toFixed(2)}
-                    </span>
-                  </div>
-                  {t.description && (
-                    <div className="transaction-desc">{t.description}</div>
-                  )}
-                  {t.addedByDisplay && (
-                    <div className="transaction-added-by">by {t.addedByDisplay}</div>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <TransactionListItems
+              transactions={byDateNewestFirst}
+              balances={balances}
+              listClassName="transaction-list readonly-transaction-list"
+            />
           )}
         </main>
       </div>
