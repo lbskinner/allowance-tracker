@@ -43,7 +43,12 @@ export function InvitePartnerModal({ getInviteCode, onClose }: InvitePartnerModa
 
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div className="modal invite-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-labelledby="invite-modal-title">
+      <div
+        className="modal invite-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="invite-modal-title"
+      >
         <h2 id="invite-modal-title">Invite partner</h2>
         <p className="invite-modal-intro">
           Share this code or link with your partner. They can sign up or log in and enter the code (or open the link) to join this household.
@@ -81,3 +86,4 @@ export function InvitePartnerModal({ getInviteCode, onClose }: InvitePartnerModa
     </div>
   )
 }
+

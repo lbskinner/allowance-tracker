@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import type { Kid, Transaction } from './types'
-import type { DateRange } from './useAllowanceStore'
-import { formatDate } from './utils/formatDate'
-import { runningBalances } from './utils/runningBalances'
+import type { Kid, Transaction } from '../types/types'
+import type { DateRange } from '../hooks/useAllowanceStore'
+import { runningBalances } from '../utils/runningBalances'
+import { TransactionListItems } from './TransactionListItems'
 
 interface TransactionListProps {
   kid: Kid | null
@@ -24,9 +24,9 @@ export function TransactionList({
   const [dateRange, setDateRange] = useState<DateRange>(30)
 
   useEffect(() => {
-    if (kid) loadTransactionsForKid(kid.id, dateRange)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kid?.id, dateRange, loadTransactionsForKid])
+    if (!kid) return
+    loadTransactionsForKid(kid.id, dateRange)
+  }, [kid, dateRange, loadTransactionsForKid])
 
   const byDateNewestFirst = useMemo(
     () => [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -66,41 +66,13 @@ export function TransactionList({
       ) : byDateNewestFirst.length === 0 ? (
         <p className="empty-state">No transactions in this range.</p>
       ) : (
-        <ul className="transaction-list">
-          {byDateNewestFirst.map((t) => (
-            <li key={t.id} className="transaction-item" data-type={t.type}>
-              <div className="transaction-main">
-                <span className="transaction-amount" data-type={t.type}>
-                  {t.type === 'credit' ? '+' : '−'}${t.amount.toFixed(2)}
-                </span>
-                <span className="transaction-date">{formatDate(t.date)}</span>
-                <span className="transaction-balance" data-negative={balances.get(t.id)! < 0}>
-                  Running total: ${balances.get(t.id)!.toFixed(2)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm('Delete this transaction?')) {
-                      onDeleteTransaction(t.id)
-                    }
-                  }}
-                  className="transaction-delete"
-                  title="Delete transaction"
-                  aria-label="Delete transaction"
-                >
-                  Delete
-                </button>
-              </div>
-              {t.description && (
-                <div className="transaction-desc">{t.description}</div>
-              )}
-              {t.addedByDisplay && (
-                <div className="transaction-added-by">by {t.addedByDisplay}</div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <TransactionListItems
+          transactions={byDateNewestFirst}
+          balances={balances}
+          onDelete={onDeleteTransaction}
+        />
       )}
     </section>
   )
 }
+

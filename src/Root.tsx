@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { ReadOnlyView } from './ReadOnlyView'
+import { ReadOnlyView } from './components/ReadOnlyView'
 
 const AuthProvider = lazy(() =>
   import('./contexts/AuthContext').then((m) => ({ default: m.AuthProvider }))

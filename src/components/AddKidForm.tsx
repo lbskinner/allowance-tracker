@@ -50,3 +50,4 @@ export function AddKidForm({ onSubmit, onCancel }: AddKidFormProps) {
     </section>
   )
 }
+

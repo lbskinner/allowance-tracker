@@ -71,7 +71,6 @@ export function useHousehold() {
     }
     setLoading(true)
     refreshHousehold()
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- depend on user id only so token refresh doesn't clear household
   }, [session?.user?.id, refreshHousehold])
 
   const createHousehold = useCallback(

@@ -679,6 +679,44 @@ body {
   border-color: #e0c0c0;
 }
 
+.transaction-delete-confirm {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: #666;
+}
+
+.transaction-delete-confirm-yes,
+.transaction-delete-confirm-cancel {
+  padding: 0.2rem 0.45rem;
+  font-size: 0.8125rem;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.transaction-delete-confirm-yes {
+  background: #f8f0f0;
+  color: #c00;
+  border-color: #e0c0c0;
+}
+
+.transaction-delete-confirm-yes:hover {
+  background: #f0e0e0;
+}
+
+.transaction-delete-confirm-cancel {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.transaction-delete-confirm-cancel:hover {
+  background: #eee;
+}
+
 /* Auth (login / sign up) */
 .auth-screen {
   min-height: 100vh;

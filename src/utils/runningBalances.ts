@@ -1,4 +1,4 @@
-import type { Transaction } from '../types'
+import type { Transaction } from '../types/types'
 
 /**
  * Running balance after each transaction, computed backward from currentBalance.

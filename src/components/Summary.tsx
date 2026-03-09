@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Kid } from './types'
+import type { Kid } from '../types/types'
 
 interface SummaryProps {
   kids: Kid[]
@@ -113,3 +113,4 @@ export function Summary({
     </section>
   )
 }
+

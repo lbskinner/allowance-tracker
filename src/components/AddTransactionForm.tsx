@@ -1,6 +1,5 @@
 import { useState, useMemo, type FormEvent } from 'react'
-import type { Kid } from './types'
-import type { TransactionType } from './types'
+import type { Kid, TransactionType } from '../types/types'
 
 interface AddTransactionFormProps {
   kids: Kid[]
@@ -40,6 +39,20 @@ export function AddTransactionForm({
   }
 
   const label = type === 'credit' ? 'Add credit' : 'Add expense'
+
+  if (kids.length === 0) {
+    return (
+      <section className="form-section">
+        <h2>{label}</h2>
+        <p className="empty-state">Add a kid before recording transactions.</p>
+        <div className="form-actions">
+          <button type="button" onClick={onCancel} className="secondary">
+            Back
+          </button>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="form-section">
@@ -113,3 +126,4 @@ export function AddTransactionForm({
     </section>
   )
 }
+

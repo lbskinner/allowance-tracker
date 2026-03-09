@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useAuth } from './contexts/useAuth'
+import { useAuth } from '../contexts/useAuth'
 
 type Mode = 'signin' | 'signup'
 
@@ -16,6 +16,14 @@ export function AuthScreen() {
     e.preventDefault()
     setError(null)
     setMessage(null)
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
     setSubmitting(true)
     try {
       const { error: err } =
@@ -106,3 +114,4 @@ export function AuthScreen() {
     </div>
   )
 }
+

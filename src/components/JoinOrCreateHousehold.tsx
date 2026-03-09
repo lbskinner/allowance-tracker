@@ -110,3 +110,4 @@ export function JoinOrCreateHousehold({ onJoin, onCreate, error: parentError }: 
     </section>
   )
 }
+
