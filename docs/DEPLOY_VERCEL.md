@@ -55,6 +55,18 @@ The app uses client-side routes (e.g. `/view/:token` for the read-only kid view)
 
 ---
 
+## Keep-alive cron (prevents Supabase free-tier pausing)
+
+`vercel.json` schedules `/api/keepalive` every 3 days (`0 14 */3 * *`, UTC). It does a cheap GET against the Supabase REST API so the project isn't paused for inactivity.
+
+1. In **Settings** → **Environment Variables**, add `CRON_SECRET` (any long random string, e.g. `openssl rand -hex 32`) for **Production**. Vercel sends it as `Authorization: Bearer <secret>` on cron calls; the endpoint returns 401 without it.
+2. Redeploy. Crons only run on the production deployment.
+3. Verify: **Settings** → **Cron Jobs** → **Run**, then check the function logs (expect 200).
+
+On the Hobby plan, crons run at most once per day and may fire anywhere within the scheduled hour; every 3 days is fine.
+
+---
+
 ## Optional: custom domain
 
 In the Vercel project: **Settings** → **Domains** → add your domain and follow the DNS instructions.
